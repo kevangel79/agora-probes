@@ -44,7 +44,7 @@ class NagiosResponse(object):
         raise SystemExit(self._code)
 
     def _toString(self, msgArray):
-        return ' / '.join(msgArray)
+        return ';\n'.join(msgArray)
 
     def _upgrade_code(self, code):
         if code > self._code:
