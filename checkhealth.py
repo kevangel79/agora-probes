@@ -9,7 +9,7 @@ TIMEOUT = 180
 class AgoraHealthCheck:
 
     SERVICES = '/api/v2/services'
-    EXT_SERVICES = '/api/v2/ext_services'
+    EXT_SERVICES = '/api/v2/ext-services'
     LOGIN = '/api/v2/auth/login/'
     nagios = NagiosResponse("Agora is up.")
 
@@ -22,14 +22,15 @@ class AgoraHealthCheck:
             r = requests.get(endpoint, verify=self.verify_ssl)
             r.raise_for_status()
         except requests.exceptions.HTTPError as e:
-            self.nagios.writeCriticalMessage("Invalid response code: " + e.message)
-            self.nagios.printAndExit()
+            code = e.response.status_code
+            if code in [400, 401]:
+                self.nagios.writeCriticalMessage("Invalid credentials")
+            else:
+                self.nagios.writeCriticalMessage("Invalid response code: " + str(code))
         except requests.exceptions.SSLError as e:
             self.nagios.writeCriticalMessage("SSL Error.")
-            self.nagios.printAndExit()
         except requests.exceptions.RequestException as e:
-            self.nagios.writeCriticalMessage("Cannot connect to endpoint.")
-            self.nagios.printAndExit()
+            self.nagios.writeCriticalMessage("Cannot connect to endpoint " + endpoint)
 
     def login(self):
         try:
@@ -40,18 +41,18 @@ class AgoraHealthCheck:
             r = requests.post(self.opts.hostname + self.LOGIN, data=payload, verify=self.verify_ssl)
             r.raise_for_status()
         except requests.exceptions.HTTPError as e:
-            self.nagios.writeCriticalMessage("Invalid response code: " + e.message)
-            self.nagios.printAndExit()
+            code = e.response.status_code
+            self.nagios.writeCriticalMessage("Invalid response code: " + str(code))
         except requests.exceptions.RequestException as e:
-            self.nagios.writeCriticalMessage("Cannot connect to endpoint.")
-            self.nagios.printAndExit()
+            self.nagios.writeCriticalMessage("Cannot connect to endpoint " + endpoint)
 
     def run(self):
         self.check_endpoint(self.opts.hostname, self.opts.timeout)
         self.check_endpoint(self.opts.hostname + self.SERVICES, self.opts.timeout)
         self.check_endpoint(self.opts.hostname + self.EXT_SERVICES, self.opts.timeout)
 
-        self.login()
+        if self.opts.username and self.opts.password:
+            self.login()
 
         self.nagios.printAndExit()
 
