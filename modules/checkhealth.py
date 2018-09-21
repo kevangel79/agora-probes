@@ -13,8 +13,15 @@ class AgoraHealthCheck:
     LOGIN = '/api/v2/auth/login/'
     nagios = NagiosResponse("Agora is up.")
 
-    def __init__(self, options):
-        self.opts = options
+    def __init__(self):
+        parser = argparse.ArgumentParser(description="Nagios Probe for Agora")
+        parser.add_argument('-H', dest='hostname', required=True, type=str, help='hostname')
+        parser.add_argument('-t', dest='timeout', type=int, default=TIMEOUT)
+        parser.add_argument('-u', dest='username', type=str, help='username')
+        parser.add_argument('-p', dest='password', type=str, help='password')
+        parser.add_argument('-i', dest='ignore_ssl', action='store_true', default=False)
+
+        self.opts = parser.parse_args()
         self.verify_ssl = not self.opts.ignore_ssl
 
     def check_endpoint(self, endpoint, timeout=TIMEOUT):
@@ -58,13 +65,5 @@ class AgoraHealthCheck:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Nagios Probe for Agora")
-    parser.add_argument('-H', dest='hostname', required=True, type=str, help='hostname')
-    parser.add_argument('-t', dest='timeout', type=int, default=TIMEOUT)
-    parser.add_argument('-u', dest='username', type=str, help='username')
-    parser.add_argument('-p', dest='password', type=str, help='password')
-    parser.add_argument('-i', dest='ignore_ssl', action='store_true', default=False)
-    options = parser.parse_args()
-
-    check = AgoraHealthCheck(options)
+    check = AgoraHealthCheck()
     check.run()
