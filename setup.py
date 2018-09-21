@@ -1,12 +1,12 @@
 from distutils.core import setup
-import glob, sys
+import glob
 
 NAME='agora-probes'
 NAGIOSPLUGINS='/usr/libexec/agora-monitoring/probes/agora'
 
 
 setup(name=NAME,
-      version=get_ver(),
+      version='0.1',
       license='AGPL 3.0',
       author='GRNET',
       author_email='angelakis@grnet.gr',
