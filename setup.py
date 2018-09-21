@@ -4,15 +4,6 @@ import glob, sys
 NAME='agora-probes'
 NAGIOSPLUGINS='/usr/libexec/agora-monitoring/probes/agora'
 
-def get_ver():
-    try:
-        for line in open(NAME+'.spec'):
-            if "Version:" in line:
-                return line.split()[1]
-    except IOError:
-        print "Make sure that %s is in directory"  % (NAME+'.spec')
-        sys.exit(1)
-
 
 setup(name=NAME,
       version=get_ver(),
