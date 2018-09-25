@@ -6,7 +6,7 @@ Name: agora-probes
 Summary: Agora related probes
 Version: 0.1
 Release: 1%{?dist}
-License: AGPL 3.0
+License: AGPLv3
 Source0: %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 Group: Network/Monitoring
@@ -40,5 +40,5 @@ rm -rf %{buildroot}
 
 
 %changelog
-* Mon Sep 24 2018 Antonios Angelakis <angelakis@grnet.gr> - 0.1
+* Mon Sep 24 2018 Antonios Angelakis <angelakis@grnet.gr> 0.1
 - Initial version of the package
