@@ -2,6 +2,7 @@
 
 import requests
 import argparse
+import json
 from NagiosResponse import NagiosResponse
 
 TIMEOUT = 180
@@ -34,39 +35,45 @@ class AgoraHealthCheck:
         self.opts = parser.parse_args()
         self.verify_ssl = not self.opts.ignore_ssl
 
-    def check_endpoint(self, endpoint, timeout=TIMEOUT):
+    def check_endpoint(self, endpoint, timeout=TIMEOUT, check_json=False):
         try:
             r = requests.get(endpoint, verify=self.verify_ssl)
             r.raise_for_status()
+            if check_json and not len(r.json()):
+                self.nagios.writeCriticalMessage("No services found at " + endpoint)
         except requests.exceptions.HTTPError as e:
             code = e.response.status_code
-            if code in [400, 401]:
-                self.nagios.writeCriticalMessage("Invalid credentials")
-            else:
-                self.nagios.writeCriticalMessage("Invalid response code: " + str(code))
+            self.nagios.writeCriticalMessage("Invalid response code: " + str(code))
         except requests.exceptions.SSLError as e:
-            self.nagios.writeCriticalMessage("SSL Error.")
+            self.nagios.writeCriticalMessage("SSL Error")
         except requests.exceptions.RequestException as e:
             self.nagios.writeCriticalMessage("Cannot connect to endpoint " + endpoint)
+        except ValueError:
+            self.nagios.writeCriticalMessage("Malformed JSON at " + endpoint)
 
     def login(self):
         try:
             payload = {
                         'username': self.opts.username,
                         'password': self.opts.password,
-                        }
+            }
             r = requests.post(self.opts.domain + self.LOGIN, data=payload, verify=self.verify_ssl)
             r.raise_for_status()
         except requests.exceptions.HTTPError as e:
             code = e.response.status_code
-            self.nagios.writeCriticalMessage("Invalid response code: " + str(code))
+            if code in [400, 401]:
+                self.nagios.writeCriticalMessage("Cannot login")
+            else:
+                self.nagios.writeCriticalMessage("Invalid response code: " + str(code))
         except requests.exceptions.RequestException as e:
             self.nagios.writeCriticalMessage("Cannot connect to endpoint " + endpoint)
 
     def run(self):
         self.check_endpoint(self.opts.domain, self.opts.timeout)
-        self.check_endpoint(self.opts.domain + self.SERVICES, self.opts.timeout)
-        self.check_endpoint(self.opts.domain + self.EXT_SERVICES, self.opts.timeout)
+        self.check_endpoint(self.opts.domain + self.SERVICES, self.opts.timeout,
+                            check_json=True)
+        self.check_endpoint(self.opts.domain + self.EXT_SERVICES, self.opts.timeout,
+                            check_json=True)
 
         if self.opts.username and self.opts.password:
             self.login()
