@@ -15,11 +15,15 @@ class AgoraHealthCheck:
 
     def __init__(self):
         parser = argparse.ArgumentParser(description="Nagios Probe for Agora")
-        parser.add_argument('-H', dest='hostname', required=True, type=str, help='hostname')
-        parser.add_argument('-t', dest='timeout', type=int, default=TIMEOUT)
+        parser.add_argument('-H', dest='hostname', required=True, type=str,
+                            help='hostname')
+        parser.add_argument('-t', dest='timeout', type=int, default=TIMEOUT,
+                            help='timeout for requests, default=' + str(TIMEOUT))
         parser.add_argument('-u', dest='username', type=str, help='username')
         parser.add_argument('-p', dest='password', type=str, help='password')
-        parser.add_argument('-i', dest='ignore_ssl', action='store_true', default=False)
+        parser.add_argument('-i', '--insecure', dest='ignore_ssl',
+                            action='store_true', default=False,
+                            help='ignore SSL errors')
 
         self.opts = parser.parse_args()
         self.verify_ssl = not self.opts.ignore_ssl
