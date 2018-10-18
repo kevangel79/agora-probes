@@ -25,7 +25,7 @@ class AgoraHealthCheck:
                             help='timeout for requests, default=' + str(TIMEOUT))
         parser.add_argument('-u', '--username', dest='username', type=str,
                             help='username')
-        parser.add_argument('-p', '--port', dest='password', type=str,
+        parser.add_argument('-p', '--password', dest='password', type=str,
                             help='password')
         parser.add_argument('-i', '--insecure', dest='ignore_ssl',
                             action='store_true', default=False,
