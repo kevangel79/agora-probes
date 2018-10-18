@@ -2,7 +2,7 @@ from distutils.core import setup
 import glob
 
 NAME='agora-probes'
-NAGIOSPLUGINS='/usr/libexec/agora-monitoring/probes/agora'
+NAGIOSPLUGINS='/usr/libexec/argo-monitoring/probes/agora'
 
 def get_ver():
     try:
