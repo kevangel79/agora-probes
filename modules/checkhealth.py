@@ -6,6 +6,7 @@ from NagiosResponse import NagiosResponse
 
 TIMEOUT = 180
 
+
 class AgoraHealthCheck:
 
     SERVICES = '/api/v2/services'
@@ -15,12 +16,17 @@ class AgoraHealthCheck:
 
     def __init__(self):
         parser = argparse.ArgumentParser(description="Nagios Probe for Agora")
-        parser.add_argument('-H', dest='hostname', required=True, type=str,
-                            help='hostname')
-        parser.add_argument('-t', dest='timeout', type=int, default=TIMEOUT,
+        parser.add_argument('-D', '--domain', dest='domain', required=True,
+                            type=str, help='Agora\'s domain')
+        parser.add_argument('-v', '--verbose', dest='verbose',
+                            action='store_true', help='verbose output')
+        parser.add_argument('-t', '--timeout', dest='timeout', type=int,
+                            default=TIMEOUT,
                             help='timeout for requests, default=' + str(TIMEOUT))
-        parser.add_argument('-u', dest='username', type=str, help='username')
-        parser.add_argument('-p', dest='password', type=str, help='password')
+        parser.add_argument('-u', '--username', dest='username', type=str,
+                            help='username')
+        parser.add_argument('-p', '--port', dest='password', type=str,
+                            help='password')
         parser.add_argument('-i', '--insecure', dest='ignore_ssl',
                             action='store_true', default=False,
                             help='ignore SSL errors')
@@ -49,7 +55,7 @@ class AgoraHealthCheck:
                         'username': self.opts.username,
                         'password': self.opts.password,
                         }
-            r = requests.post(self.opts.hostname + self.LOGIN, data=payload, verify=self.verify_ssl)
+            r = requests.post(self.opts.domain + self.LOGIN, data=payload, verify=self.verify_ssl)
             r.raise_for_status()
         except requests.exceptions.HTTPError as e:
             code = e.response.status_code
@@ -58,9 +64,9 @@ class AgoraHealthCheck:
             self.nagios.writeCriticalMessage("Cannot connect to endpoint " + endpoint)
 
     def run(self):
-        self.check_endpoint(self.opts.hostname, self.opts.timeout)
-        self.check_endpoint(self.opts.hostname + self.SERVICES, self.opts.timeout)
-        self.check_endpoint(self.opts.hostname + self.EXT_SERVICES, self.opts.timeout)
+        self.check_endpoint(self.opts.domain, self.opts.timeout)
+        self.check_endpoint(self.opts.domain + self.SERVICES, self.opts.timeout)
+        self.check_endpoint(self.opts.domain + self.EXT_SERVICES, self.opts.timeout)
 
         if self.opts.username and self.opts.password:
             self.login()
