@@ -1,0 +1,73 @@
+# Agora Probes
+
+This repository contains Nagios plugins to check availability of Agora Catalogue Service.
+
+Currently it supports the following probes:
+ - Agora Health Check
+
+## Requirements
+- Python 2.7
+- Pip
+
+## Installation
+Install the requirements using pip (preferably in a virtualenv):
+```bash
+$ pip install -r requirements.txt
+```
+
+Then use setup.py to install the program:
+```bash
+$ python setup.py install
+```
+
+## Usage
+```bash
+checkhealth [-h] -D DOMAIN [-v] [-t TIMEOUT] [-u USERNAME]
+            [-p PASSWORD] [-i]
+
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -D DOMAIN, --domain DOMAIN
+                        Agora's domain
+  -v, --verbose         verbose output
+  -t TIMEOUT, --timeout TIMEOUT
+                        timeout for requests, default=180
+  -u USERNAME, --username USERNAME
+                        username
+  -p PASSWORD, --password PASSWORD
+                        password
+  -i, --insecure        ignore SSL errors
+```
+
+## What the probes do
+
+### Agora Health Check
+
+Agora Health Check does the following:
+
+- Checks if the Agora Domain given is up and returns 200 OK
+- Checks if /api/v2/services is up and returns a valid JSON
+- Checks if /api/v2/ext-services is up and returns a valid JSON
+- If given a username-password combinations, checks if it can login
+
+
+The probe returns exit codes and responses according to Nagios Plugins Specifications.
+
+## Copyright and license
+
+Copyright (C) 2018 GRNET S.A.
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see [http://www.gnu.org/licenses/]([http://www.gnu.org/licenses/).
+
