@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
-import requests
+import sys
 import argparse
-import json
+import requests
 from NagiosResponse import NagiosResponse
 
 TIMEOUT = 180
@@ -13,33 +13,19 @@ class AgoraHealthCheck:
     SERVICES = '/api/v2/services'
     EXT_SERVICES = '/api/v2/ext-services'
     LOGIN = '/api/v2/auth/login/'
-    nagios = NagiosResponse("Agora is up.")
 
-    def __init__(self):
-        parser = argparse.ArgumentParser(description="Nagios Probe for Agora")
-        parser.add_argument('-D', '--domain', dest='domain', required=True,
-                            type=str, help='Agora\'s domain')
-        parser.add_argument('-v', '--verbose', dest='verbose',
-                            action='store_true', help='verbose output')
-        parser.add_argument('-t', '--timeout', dest='timeout', type=int,
-                            default=TIMEOUT,
-                            help='timeout for requests, default=' + str(TIMEOUT))
-        parser.add_argument('-u', '--username', dest='username', type=str,
-                            help='username')
-        parser.add_argument('-p', '--password', dest='password', type=str,
-                            help='password')
-        parser.add_argument('-i', '--insecure', dest='ignore_ssl',
-                            action='store_true', default=False,
-                            help='ignore SSL errors')
+    def __init__(self, args=sys.argv[1:]):
+        self.args = parse_arguments(args)
+        self.verify_ssl = not self.args.ignore_ssl
+        self.nagios = NagiosResponse("Agora is up.")
 
-        self.opts = parser.parse_args()
-        self.verify_ssl = not self.opts.ignore_ssl
-
-    def check_endpoint(self, endpoint, timeout=TIMEOUT, check_json=False):
+    def check_endpoint(self, endpointExtension='', checkJSON=False):
         try:
-            r = requests.get(endpoint, verify=self.verify_ssl)
+            endpoint = self.args.domain + endpointExtension
+            r = requests.get(endpoint, verify=self.verify_ssl,
+                             timeout=self.args.timeout)
             r.raise_for_status()
-            if check_json and not len(r.json()):
+            if checkJSON and not len(r.json()):
                 self.nagios.writeCriticalMessage("No services found at " + endpoint)
         except requests.exceptions.HTTPError as e:
             code = e.response.status_code
@@ -54,10 +40,10 @@ class AgoraHealthCheck:
     def login(self):
         try:
             payload = {
-                        'username': self.opts.username,
-                        'password': self.opts.password,
+                        'username': self.args.username,
+                        'password': self.args.password,
             }
-            r = requests.post(self.opts.domain + self.LOGIN, data=payload, verify=self.verify_ssl)
+            r = requests.post(self.args.domain + self.LOGIN, data=payload, verify=self.verify_ssl)
             r.raise_for_status()
         except requests.exceptions.HTTPError as e:
             code = e.response.status_code
@@ -69,16 +55,31 @@ class AgoraHealthCheck:
             self.nagios.writeCriticalMessage("Cannot connect to endpoint " + endpoint)
 
     def run(self):
-        self.check_endpoint(self.opts.domain, self.opts.timeout)
-        self.check_endpoint(self.opts.domain + self.SERVICES, self.opts.timeout,
-                            check_json=True)
-        self.check_endpoint(self.opts.domain + self.EXT_SERVICES, self.opts.timeout,
-                            check_json=True)
-
-        if self.opts.username and self.opts.password:
+        self.check_endpoint()
+        self.check_endpoint(self.SERVICES, checkJSON=True)
+        self.check_endpoint(self.EXT_SERVICES, checkJSON=True)
+        if self.args.username and self.args.password:
             self.login()
-
         self.nagios.printAndExit()
+
+
+def parse_arguments(args):
+    parser = argparse.ArgumentParser(description="Nagios Probe for Agora")
+    parser.add_argument('-D', '--domain', dest='domain', required=True,
+                        type=str, help='Agora\'s domain')
+    parser.add_argument('-v', '--verbose', dest='verbose',
+                        action='store_true', help='verbose output')
+    parser.add_argument('-t', '--timeout', dest='timeout', type=int,
+                        default=TIMEOUT,
+                        help='timeout for requests, default=' + str(TIMEOUT))
+    parser.add_argument('-u', '--username', dest='username', type=str,
+                        help='username')
+    parser.add_argument('-p', '--password', dest='password', type=str,
+                        help='password')
+    parser.add_argument('-i', '--insecure', dest='ignore_ssl',
+                        action='store_true', default=False,
+                        help='ignore SSL errors')
+    return parser.parse_args(args)
 
 
 if __name__ == "__main__":
