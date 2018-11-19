@@ -13,6 +13,12 @@ def get_ver():
         print "Make sure that %s is in directory"  % (NAME+'.spec')
         sys.exit(1)
 
+def data_files():
+    import os
+    if (not os.path.isdir('/usr/libexec/')):
+        return []
+    return [(NAGIOSPLUGINS, glob.glob('src/*'))]
+
 setup(name=NAME,
       version=get_ver(),
       license='AGPL 3.0',
@@ -26,7 +32,7 @@ setup(name=NAME,
         - Agora Health Check
       ''',
       url='https://eosc.agora.grnet.gr/',
-      data_files=[(NAGIOSPLUGINS, glob.glob('src/*'))],
+      data_files=data_files(),
       packages=['agora_probes'],
       package_dir={'agora_probes': 'modules/'},
 )
