@@ -37,13 +37,14 @@ class AgoraHealthCheck:
         except ValueError:
             self.nagios.writeCriticalMessage("Malformed JSON at " + endpoint)
 
-    def login(self):
+    def login(self, loginEndpoint):
         try:
             payload = {
                         'username': self.args.username,
                         'password': self.args.password,
             }
-            r = requests.post(self.args.domain + self.LOGIN, data=payload, verify=self.verify_ssl)
+            r = requests.post(self.args.domain + loginEndpoint, data=payload,
+                    verify=self.verify_ssl)
             r.raise_for_status()
         except requests.exceptions.HTTPError as e:
             code = e.response.status_code
@@ -59,7 +60,7 @@ class AgoraHealthCheck:
         self.check_endpoint(self.SERVICES, checkJSON=True)
         self.check_endpoint(self.EXT_SERVICES, checkJSON=True)
         if self.args.username and self.args.password:
-            self.login()
+            self.login(self.LOGIN)
         self.nagios.printAndExit()
 
 
