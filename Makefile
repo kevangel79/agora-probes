@@ -1,4 +1,4 @@
-PKGNAME=agora_brobes
+PKGNAME=agora_probes
 SPECFILE=${PKGNAME}.spec
 PKGVERSION=$(shell grep -s '^Version:' $(SPECFILE) | sed -e 's/Version: *//')
 
