@@ -1,7 +1,7 @@
 from distutils.core import setup
 import glob
 
-NAME='agora-probes'
+NAME='agora_probes'
 NAGIOSPLUGINS='/usr/libexec/argo-monitoring/probes/agora'
 
 def get_ver():
@@ -11,7 +11,7 @@ def get_ver():
                 return line.split()[1]
     except IOError:
         print "Make sure that %s is in directory"  % (NAME+'.spec')
-	sys.exit(1)
+        sys.exit(1)
 
 setup(name=NAME,
       version=get_ver(),
