@@ -57,7 +57,7 @@ The probe returns exit codes and responses according to Nagios Plugins Specifica
 ## Running the tests
 After installing requirements.txt, you can run the tests from the project directory like this:
 ```
-python -m unittest discover
+$ python -m unittest discover
 ```
 
 ## Copyright and license
