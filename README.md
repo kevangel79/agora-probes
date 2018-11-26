@@ -11,17 +11,17 @@ Currently it supports the following probes:
 
 ## Installation
 Install the requirements using pip (preferably in a virtualenv):
-```bash
+```
 $ pip install -r requirements.txt
 ```
 
 Then use setup.py to install the program:
-```bash
+```
 $ python setup.py install
 ```
 
 ## Usage
-```bash
+```
 checkhealth [-h] -D DOMAIN [-v] [-t TIMEOUT] [-u USERNAME]
             [-p PASSWORD] [-i]
 
@@ -53,6 +53,12 @@ Agora Health Check does the following:
 
 
 The probe returns exit codes and responses according to Nagios Plugins Specifications.
+
+## Running the tests
+After installing requirements.txt, you can run the tests from the project directory like this:
+```
+python -m unittest discover
+```
 
 ## Copyright and license
 
