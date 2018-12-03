@@ -1,67 +1,86 @@
 #!/usr/bin/env python
 
-import requests
+import sys
 import argparse
+import requests
 from NagiosResponse import NagiosResponse
 
 TIMEOUT = 180
+
 
 class AgoraHealthCheck:
 
     SERVICES = '/api/v2/services'
     EXT_SERVICES = '/api/v2/ext-services'
     LOGIN = '/api/v2/auth/login/'
-    nagios = NagiosResponse("Agora is up.")
 
-    def __init__(self):
-        parser = argparse.ArgumentParser(description="Nagios Probe for Agora")
-        parser.add_argument('-H', dest='hostname', required=True, type=str, help='hostname')
-        parser.add_argument('-t', dest='timeout', type=int, default=TIMEOUT)
-        parser.add_argument('-u', dest='username', type=str, help='username')
-        parser.add_argument('-p', dest='password', type=str, help='password')
-        parser.add_argument('-i', dest='ignore_ssl', action='store_true', default=False)
+    def __init__(self, args=sys.argv[1:]):
+        self.args = parse_arguments(args)
+        self.verify_ssl = not self.args.ignore_ssl
+        self.nagios = NagiosResponse("Agora is up.")
 
-        self.opts = parser.parse_args()
-        self.verify_ssl = not self.opts.ignore_ssl
-
-    def check_endpoint(self, endpoint, timeout=TIMEOUT):
+    def check_endpoint(self, endpointExtension='', checkJSON=False):
         try:
-            r = requests.get(endpoint, verify=self.verify_ssl)
+            endpoint = self.args.domain + endpointExtension
+            r = requests.get(endpoint, verify=self.verify_ssl,
+                             timeout=self.args.timeout)
+            r.raise_for_status()
+            if checkJSON and not len(r.json()):
+                self.nagios.writeCriticalMessage("No services found at " + endpoint)
+        except requests.exceptions.HTTPError as e:
+            code = e.response.status_code
+            self.nagios.writeCriticalMessage("Invalid response code: " + str(code))
+        except requests.exceptions.SSLError as e:
+            self.nagios.writeCriticalMessage("SSL Error")
+        except requests.exceptions.RequestException as e:
+            self.nagios.writeCriticalMessage("Cannot connect to endpoint " + endpoint)
+        except ValueError:
+            self.nagios.writeCriticalMessage("Malformed JSON at " + endpoint)
+
+    def login(self, loginEndpoint):
+        try:
+            payload = {
+                        'username': self.args.username,
+                        'password': self.args.password,
+            }
+            r = requests.post(self.args.domain + loginEndpoint, data=payload,
+                    verify=self.verify_ssl)
             r.raise_for_status()
         except requests.exceptions.HTTPError as e:
             code = e.response.status_code
             if code in [400, 401]:
-                self.nagios.writeCriticalMessage("Invalid credentials")
+                self.nagios.writeCriticalMessage("Cannot login")
             else:
                 self.nagios.writeCriticalMessage("Invalid response code: " + str(code))
-        except requests.exceptions.SSLError as e:
-            self.nagios.writeCriticalMessage("SSL Error.")
-        except requests.exceptions.RequestException as e:
-            self.nagios.writeCriticalMessage("Cannot connect to endpoint " + endpoint)
-
-    def login(self):
-        try:
-            payload = {
-                        'username': self.opts.username,
-                        'password': self.opts.password,
-                        }
-            r = requests.post(self.opts.hostname + self.LOGIN, data=payload, verify=self.verify_ssl)
-            r.raise_for_status()
-        except requests.exceptions.HTTPError as e:
-            code = e.response.status_code
-            self.nagios.writeCriticalMessage("Invalid response code: " + str(code))
         except requests.exceptions.RequestException as e:
             self.nagios.writeCriticalMessage("Cannot connect to endpoint " + endpoint)
 
     def run(self):
-        self.check_endpoint(self.opts.hostname, self.opts.timeout)
-        self.check_endpoint(self.opts.hostname + self.SERVICES, self.opts.timeout)
-        self.check_endpoint(self.opts.hostname + self.EXT_SERVICES, self.opts.timeout)
-
-        if self.opts.username and self.opts.password:
-            self.login()
-
+        self.check_endpoint()
+        self.check_endpoint(self.SERVICES, checkJSON=True)
+        self.check_endpoint(self.EXT_SERVICES, checkJSON=True)
+        if self.args.username and self.args.password:
+            self.login(self.LOGIN)
         self.nagios.printAndExit()
+
+
+def parse_arguments(args):
+    parser = argparse.ArgumentParser(description="Nagios Probe for Agora")
+    parser.add_argument('-D', '--domain', dest='domain', required=True,
+                        type=str, help='Agora\'s domain')
+    parser.add_argument('-v', '--verbose', dest='verbose',
+                        action='store_true', help='verbose output')
+    parser.add_argument('-t', '--timeout', dest='timeout', type=int,
+                        default=TIMEOUT,
+                        help='timeout for requests, default=' + str(TIMEOUT))
+    parser.add_argument('-u', '--username', dest='username', type=str,
+                        help='username')
+    parser.add_argument('-p', '--password', dest='password', type=str,
+                        help='password')
+    parser.add_argument('-i', '--insecure', dest='ignore_ssl',
+                        action='store_true', default=False,
+                        help='ignore SSL errors')
+    return parser.parse_args(args)
 
 
 if __name__ == "__main__":

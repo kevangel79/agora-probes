@@ -1,7 +1,7 @@
 from distutils.core import setup
 import glob
 
-NAME='agora-probes'
+NAME='agora_probes'
 NAGIOSPLUGINS='/usr/libexec/argo-monitoring/probes/agora'
 
 def get_ver():
@@ -11,7 +11,13 @@ def get_ver():
                 return line.split()[1]
     except IOError:
         print "Make sure that %s is in directory"  % (NAME+'.spec')
-	sys.exit(1)
+        sys.exit(1)
+
+def data_files():
+    import os
+    if (not os.path.isdir('/usr/libexec/')):
+        return []
+    return [(NAGIOSPLUGINS, glob.glob('src/*'))]
 
 setup(name=NAME,
       version=get_ver(),
@@ -26,7 +32,7 @@ setup(name=NAME,
         - Agora Health Check
       ''',
       url='https://eosc.agora.grnet.gr/',
-      data_files=[(NAGIOSPLUGINS, glob.glob('src/*'))],
+      data_files=data_files(),
       packages=['agora_probes'],
       package_dir={'agora_probes': 'modules/'},
 )
