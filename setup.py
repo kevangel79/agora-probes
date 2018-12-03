@@ -2,7 +2,7 @@ from distutils.core import setup
 import glob
 
 NAME='nagios-plugin-grnet-agora'
-NAGIOSPLUGINS='/usr/libexec/argo-monitoring/probes/agora'
+NAGIOSPLUGINS='/usr/libexec/argo-monitoring/probes/grnet-agora'
 
 def get_ver():
     try:
